@@ -15,6 +15,11 @@ struct VulkanSwapchain {
 
   std::vector<VkImage> images;
   std::vector<VkImageView> image_views;
+
+  std::vector<VkFramebuffer> frame_buffers;
+
+  VkSemaphore image_available, render_finished;
+  VkFence frame_in_flight;
 };
 
 struct VulkanSwapchainDetails {
@@ -23,7 +28,8 @@ struct VulkanSwapchainDetails {
   std::vector<VkPresentModeKHR> present_modes;
 };
 
-void vulkan_create_swapchain(struct Window *, struct VulkanContext *);
+VulkanSwapchain vulkan_create_swapchain(struct Window *,
+                                        struct VulkanContext *);
 VulkanSwapchainDetails vulkan_query_swapchain_details(VkPhysicalDevice,
                                                       struct VulkanContext *);
 

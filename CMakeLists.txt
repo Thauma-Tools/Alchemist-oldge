@@ -9,6 +9,9 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
 include(FetchContent)
 FetchContent_Declare(
   spdlog
@@ -16,9 +19,9 @@ FetchContent_Declare(
   GIT_TAG "v1.14.1"
 )
 FetchContent_Declare(
-  glfw
-  GIT_REPOSITORY "https://github.com/glfw/glfw.git"
-  GIT_TAG "3.4"
+  sdl
+  GIT_REPOSITORY "https://github.com/libsdl-org/SDL.git"
+  GIT_TAG "prerelease-3.1.2"
 )
 FetchContent_GetProperties(spdlog)
 if(NOT spdlog_POPULATED)
@@ -28,17 +31,27 @@ if(NOT spdlog_POPULATED)
 
   add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR})
 endif()
-FetchContent_GetProperties(glfw)
-if(NOT glfw_POPULATED)
-  FetchContent_Populate(glfw)
+FetchContent_GetProperties(sdl)
+if(NOT sdl_POPULATED)
+  FetchContent_Populate(sdl)
 
-  set(GLFW_INSTALL OFF)
-  set(GLFW_BUILD_DOCS OFF)
-  set(GLFW_BUILD_TESTS OFF)
-  set(GLFW_BUILD_EXAMPLES OFF)
+  set(SDL_STATIC OFF)
+  set(SDL_TEST_LIBRARY OFF)
 
-  add_subdirectory(${glfw_SOURCE_DIR} ${glfw_BINARY_DIR})
+  add_subdirectory(${sdl_SOURCE_DIR} ${sdl_BINARY_DIR})
 endif()
+
+# FetchContent_GetProperties(glfw)
+# if(NOT glfw_POPULATED)
+#   FetchContent_Populate(glfw)
+#
+#   set(GLFW_INSTALL OFF)
+#   set(GLFW_BUILD_DOCS OFF)
+#   set(GLFW_BUILD_TESTS OFF)
+#   set(GLFW_BUILD_EXAMPLES OFF)
+#
+#   add_subdirectory(${glfw_SOURCE_DIR} ${glfw_BINARY_DIR})
+# endif()
 find_package(Vulkan REQUIRED)
 
 if(UNIX AND (NOT APPLE))
@@ -46,6 +59,13 @@ if(UNIX AND (NOT APPLE))
     ALCHEMIST_DEFINITIONS
       ALCHEMIST_PLATFORM_LINUX
   )
+endif()
+
+if(WIN32)
+  set(
+    ALCHEMIST_DEFINITIONS
+      ALCHEMIST_PLATFORM_WINDOWS
+  ) 
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -70,10 +90,14 @@ target_sources(
     src/Alchemist.cpp
     src/Alchemist_logger.cpp
     src/Alchemist_application.cpp
+    src/Alchemist_renderer.cpp
 
     src/Vulkan/Alchemist_vulkan.cpp
     src/Vulkan/Alchemist_device.cpp
     src/Vulkan/Alchemist_swapchain.cpp
+    src/Vulkan/Alchemist_pipeline.cpp
+    src/Vulkan/Alchemist_renderpass.cpp
+    src/Vulkan/Alchemist_shader.cpp
 )
 target_compile_definitions(
   Alchemist
@@ -89,11 +113,11 @@ target_link_libraries(
   Alchemist
   PUBLIC
     spdlog
+    SDL3::SDL3
 )
 target_link_libraries(
   Alchemist
   PRIVATE
-    glfw
     ${Vulkan_LIBRARIES}
 )
 target_include_directories(
@@ -104,7 +128,7 @@ target_include_directories(
 target_include_directories(
   Alchemist
   PRIVATE
-    ${VUlkan_INCLUDE_DIRS}
+    ${Vulkan_INCLUDE_DIRS}
 )
 
 add_subdirectory(sandbox)

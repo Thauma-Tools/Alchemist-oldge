@@ -15,7 +15,6 @@ struct VulkanContext {
   VkSurfaceKHR surface;
 
   VulkanDevice devices;
-  VulkanSwapchain swapchain;
 
   VkDebugUtilsMessengerEXT debug_messenger;
 };

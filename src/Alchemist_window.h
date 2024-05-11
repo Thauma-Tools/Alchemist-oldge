@@ -2,12 +2,12 @@
 #define ALCHEMIST_WINDOW_H_
 
 #include <Alchemist/Defines.h>
-#include <GLFW/glfw3.h>
+#include <SDL_video.h>
 
 namespace tt {
 
 struct Window {
-  GLFWwindow *window;
+  SDL_Window *window;
 
   const char *title;
   s32 width, height;

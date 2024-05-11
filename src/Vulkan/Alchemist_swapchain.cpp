@@ -1,12 +1,13 @@
 #include "Alchemist_swapchain.h"
 
-#include <GLFW/glfw3.h>
-#include <vulkan/vulkan_core.h>
+#include <SDL.h>
+#include <vulkan/vulkan.h>
 
 #include <algorithm>
 #include <limits>
 #include <vector>
 
+#include "../Alchemist_logger.h"
 #include "../Alchemist_window.h"
 #include "Alchemist_device.h"
 #include "Alchemist_vulkan.h"
@@ -67,7 +68,7 @@ static inline VkExtent2D vulkan_choose_extent(
     return capabilities.currentExtent;
   else {
     s32 width, height;
-    glfwGetFramebufferSize(window->window, &width, &height);
+    SDL_GetWindowSizeInPixels(window->window, &width, &height);
 
     VkExtent2D actual = {
         (u32)width,
@@ -85,7 +86,10 @@ static inline VkExtent2D vulkan_choose_extent(
 
 }  // namespace tt
 
-void vulkan_create_swapchain(Window *window, VulkanContext *context) {
+VulkanSwapchain vulkan_create_swapchain(Window *window,
+                                        VulkanContext *context) {
+  VulkanSwapchain swapchain;
+
   VulkanSwapchainDetails details =
       vulkan_query_swapchain_details(context->devices.physical, context);
 
@@ -122,25 +126,25 @@ void vulkan_create_swapchain(Window *window, VulkanContext *context) {
   };
 
   vkCreateSwapchainKHR(context->devices.logical, &create_info, nullptr,
-                       &context->swapchain.swapchain);
+                       &swapchain.swapchain);
+  ALCH_DEBUG("Swapchain: {}", (void *)swapchain.swapchain);
 
-  vkGetSwapchainImagesKHR(context->devices.logical,
-                          context->swapchain.swapchain, &image_count, nullptr);
-  context->swapchain.images.resize(image_count);
-  vkGetSwapchainImagesKHR(context->devices.logical,
-                          context->swapchain.swapchain, &image_count,
-                          context->swapchain.images.data());
+  vkGetSwapchainImagesKHR(context->devices.logical, swapchain.swapchain,
+                          &image_count, nullptr);
+  swapchain.images.resize(image_count);
+  vkGetSwapchainImagesKHR(context->devices.logical, swapchain.swapchain,
+                          &image_count, swapchain.images.data());
 
-  context->swapchain.format = format.format;
-  context->swapchain.extent = extent;
+  swapchain.format = format.format;
+  swapchain.extent = extent;
 
-  context->swapchain.image_views.resize(image_count);
+  swapchain.image_views.resize(image_count);
   for (s32 i = 0; i < image_count; i++) {
     VkImageViewCreateInfo create_info = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .image = context->swapchain.images[i],
+        .image = swapchain.images[i],
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = context->swapchain.format,
+        .format = swapchain.format,
         .components =
             {
                 .r = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -159,8 +163,25 @@ void vulkan_create_swapchain(Window *window, VulkanContext *context) {
     };
 
     vkCreateImageView(context->devices.logical, &create_info, nullptr,
-                      &context->swapchain.image_views[i]);
+                      &swapchain.image_views[i]);
   }
-}  // namespace tt
+
+  VkSemaphoreCreateInfo semaphore_info = {
+      .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+  };
+  vkCreateSemaphore(context->devices.logical, &semaphore_info, nullptr,
+                    &swapchain.image_available);
+  vkCreateSemaphore(context->devices.logical, &semaphore_info, nullptr,
+                    &swapchain.render_finished);
+
+  VkFenceCreateInfo fence_info = {
+      .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+      .flags = VK_FENCE_CREATE_SIGNALED_BIT,
+  };
+  vkCreateFence(context->devices.logical, &fence_info, nullptr,
+                &swapchain.frame_in_flight);
+
+  return swapchain;
+}
 
 }  // namespace tt

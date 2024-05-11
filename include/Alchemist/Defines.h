@@ -11,8 +11,8 @@
 #if defined(ALCHEMIST_PLATFORM_WINDOWS)
 #define ALCH_EXPORT __declspec(dllimport)
 #elif defined(ALCHEMIST_PLATFORM_LINUX)
-#endif
 #define ALCH_EXPORT
+#endif
 #endif
 
 using s8 = signed char;

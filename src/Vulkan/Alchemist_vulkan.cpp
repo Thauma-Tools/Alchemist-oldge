@@ -1,13 +1,7 @@
 #include "Alchemist_vulkan.h"
 
-#include <GLFW/glfw3.h>
-#if defined(ALCHEMIST_PLATFORM_LINUX)
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
-#define GLFW_EXPOSE_NATIVE_X11
-#include <GLFW/glfw3native.h>
-#include <vulkan/vulkan_xlib.h>
-#endif
+#include <SDL_vulkan.h>
+
 #include <vector>
 
 #include "../Alchemist_logger.h"
@@ -41,10 +35,11 @@ static inline bool vulkan_create_instance(Window *window,
   };
 
   u32 extension_count = 0;
-  const char **glfw_extensions =
-      glfwGetRequiredInstanceExtensions(&extension_count);
-  std::vector<const char *> extensions(glfw_extensions,
-                                       glfw_extensions + extension_count);
+  const char *const *sdl_extensions =
+      SDL_Vulkan_GetInstanceExtensions(&extension_count);
+
+  std::vector<const char *> extensions(sdl_extensions,
+                                       sdl_extensions + extension_count);
 
   bool validation_found = false;
 #if defined(ALCHEMIST_DEBUG)
@@ -89,8 +84,8 @@ static inline bool vulkan_create_instance(Window *window,
 static inline void vulkan_create_surface(Window *window,
                                          VulkanContext *context) {
   ALCH_DEBUG("Creating surface");
-  glfwCreateWindowSurface(context->instance, window->window, nullptr,
-                          &context->surface);
+  SDL_Vulkan_CreateSurface(window->window, context->instance, nullptr,
+                           &context->surface);
   ALCH_DEBUG("Created surface");
 }
 
@@ -127,7 +122,6 @@ s32 vulkan_initialize_context(Window *window, VulkanContext *context) {
 #endif
   vulkan_create_surface(window, context);
   if (!vulkan_create_devices(context)) return -20;
-  vulkan_create_swapchain(window, context);
 
   return 0;
 }
@@ -139,11 +133,6 @@ static inline void vulkan_destroy_debug_messenger(VulkanContext *context) {
 }
 
 void vulkan_destroy_context(VulkanContext *context) {
-  for (auto &image_view : context->swapchain.image_views)
-    vkDestroyImageView(context->devices.logical, image_view, nullptr);
-
-  vkDestroySwapchainKHR(context->devices.logical, context->swapchain.swapchain,
-                        nullptr);
   vkDestroyDevice(context->devices.logical, nullptr);
   vkDestroySurfaceKHR(context->instance, context->surface, nullptr);
 #if defined(ALCHEMIST_DEBUG)

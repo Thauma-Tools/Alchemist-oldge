@@ -14,7 +14,7 @@ class ALCH_EXPORT Application {
   void set_window_width(const s32);
   void set_window_height(const s32);
 
-  void *operator new(u64);
+  void *operator new(size_t);
 
  private:
   struct Window *_window;
