@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 
 #include "Alchemist_device.h"
+#include "Alchemist_swapchain.h"
 
 namespace tt {
 
@@ -14,6 +15,7 @@ struct VulkanContext {
   VkSurfaceKHR surface;
 
   VulkanDevice devices;
+  VulkanSwapchain swapchain;
 
   VkDebugUtilsMessengerEXT debug_messenger;
 };

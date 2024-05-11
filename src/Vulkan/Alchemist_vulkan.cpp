@@ -127,6 +127,7 @@ s32 vulkan_initialize_context(Window *window, VulkanContext *context) {
 #endif
   vulkan_create_surface(window, context);
   if (!vulkan_create_devices(context)) return -20;
+  vulkan_create_swapchain(window, context);
 
   return 0;
 }
@@ -138,6 +139,11 @@ static inline void vulkan_destroy_debug_messenger(VulkanContext *context) {
 }
 
 void vulkan_destroy_context(VulkanContext *context) {
+  for (auto &image_view : context->swapchain.image_views)
+    vkDestroyImageView(context->devices.logical, image_view, nullptr);
+
+  vkDestroySwapchainKHR(context->devices.logical, context->swapchain.swapchain,
+                        nullptr);
   vkDestroyDevice(context->devices.logical, nullptr);
   vkDestroySurfaceKHR(context->instance, context->surface, nullptr);
 #if defined(ALCHEMIST_DEBUG)

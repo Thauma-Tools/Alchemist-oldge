@@ -73,6 +73,7 @@ target_sources(
 
     src/Vulkan/Alchemist_vulkan.cpp
     src/Vulkan/Alchemist_device.cpp
+    src/Vulkan/Alchemist_swapchain.cpp
 )
 target_compile_definitions(
   Alchemist
